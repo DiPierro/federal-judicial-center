@@ -6,36 +6,36 @@
 # How to use this file:
 #
 # Welcome to Federal Judicial Center Dashboard! To build your custom
-# dashboard, simply download the entire FJC civil database and then 
+# dashboard, simply download the entire FJC civil database and then
 # fill out each of the fields below. Each field is required. You can
-# download the FJC civil database since 1988 here: 
+# download the FJC civil database since 1988 here:
 # https://www.fjc.gov/research/idb/interactive/IDB-civil-since-1988
 
 # Enter the local path to your data
 # On a Mac, this will be something like /Users/username/folder/file.txt.
 # On a PC, this will be something like C:\Documents\Folder\file.txt
-path: /Users/amydipierro/Documents/Stanford_Q2/cv88on.txt
+path:
 
 # Enter the full name of a state to see lawsuits filed by its residents
-state: new jERSEY
+state:
 
-# Enter the name of a district in the same state 
+# Enter the name of a district in the same state
 # to see lawsuits filed in this district
-district: new jersey
+district:
 
 # Enter the name of the "nature of suit" -- the type of lawsuit -- you want to see.
-# A list of all possible natures of suit is available here: 
+# A list of all possible natures of suit is available here:
 # https://www.fjc.gov/sites/default/files/idb/codebooks/Civil%20Codebook%201988%20Forward_0.pdf
-nature_of_suit: patent
+nature_of_suit:
 
 # Enter the start year here as a value between 1988 and 2018
-start_year: 2000
+start_year:
 
 # Enter the end month here as a value between 1 and 12
-start_month: 1
+start_month:
 
 # Enter the end year here as a value between 1988 and 2018
-end_year: 2018
+end_year:
 
 # Enter the end month here as a value between 1 and 12
-end_month: 1
+end_month:

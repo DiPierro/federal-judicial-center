@@ -1,5 +1,5 @@
-# Purpose: Parses a .txt file of civil court cases filed for the dates, state 
-#          and nature of suit specified in dashboard.yaml. Parses the data,  
+# Purpose: Parses a .txt file of civil court cases filed for the dates, state
+#          and nature of suit specified in dashboard.yaml. Parses the data,
 #          renames variables, recodes variables.
 # Input:   .txt file specified in `file_in` parameter
 # Output:  dashboard.rds
@@ -17,22 +17,22 @@ begin_year <- 1988
 end_year <- 2018
 
 ## Path in for dashboard.yaml
-yaml <- 
+yaml <-
   yaml::read_yaml(
-    here::here("c01-own", "scripts", "dashboard.yaml")
+    here::here("scripts", "dashboard.yaml")
   )
 
 ## Path out for dashboard.rds
-file_out <- here::here("c01-own", "data-raw", "dashboard.rds")
+file_out <- here::here("data-raw", "dashboard.rds")
 
 ## Columns to read in
 vars_cols <-
   cols_only(
-    "DISTRICT" = col_character(), 
+    "DISTRICT" = col_character(),
     "DOCKET" = col_character(),
     "DEF" = col_character(),
     "PLT" = col_character(),
-    "NOS" = col_character(), 
+    "NOS" = col_character(),
     "FILEDATE" = col_date(format = "%m/%d/%Y"),
     "COUNTY" = col_integer(),
     "TERMDATE" = col_date(format = "%m/%d/%Y")
@@ -48,7 +48,7 @@ nos_recode <-
     "150" = "OVERPAYMENTS & ENFORCEMENT OF JUDGMENTS",
     "151" = "OVERPAYMENTS UNDER THE MEDICARE ACT",
     "152" = "RECOVERY OF DEFAULTED STUDENT LOANS",
-    "153" = "RECOVERY OF OVERPAYMENTS OF VET BENEFITS", 
+    "153" = "RECOVERY OF OVERPAYMENTS OF VET BENEFITS",
     "160" = "STOCKHOLDER'S SUITS",
     "190" = "OTHER CONTRACT ACTIONS",
     "195" = "CONTRACT PRODUCT LIABILITY",
@@ -71,7 +71,7 @@ nos_recode <-
     "362" = "MEDICAL MALPRACTICE",
     "365" = "PERSONAL INJURY -PRODUCT LIABILITY",
     "367" = "HEALTH CARE / PHARM",
-    "368" = "ASBESTOS PERSONAL INJURY - PROD.LIAB.", 
+    "368" = "ASBESTOS PERSONAL INJURY - PROD.LIAB.",
     "370" = "OTHER FRAUD",
     "371" = "TRUTH IN LENDING",
     "375" = "FALSE CLAIMS ACT",
@@ -80,7 +80,7 @@ nos_recode <-
     "400" = "STATE RE-APPORTIONMENT",
     "410" = "ANTITRUST",
     "422" = "BANKRUPTCY APPEALS RULE 28 USC 158",
-    "423" = "BANKRUPTCY WITHDRAWAL 28 USC 157", 
+    "423" = "BANKRUPTCY WITHDRAWAL 28 USC 157",
     "430" = "BANKS AND BANKING",
     "440" = "OTHER CIVIL RIGHTS",
     "441" = "CIVIL RIGHTS VOTING",
@@ -92,7 +92,7 @@ nos_recode <-
     "448" = "EDUCATION",
     "450" = "INTERSTATE COMMERCE",
     "460" = "DEPORTATION",
-    "462" = "NATURALIZATION, PETITION FOR HEARING OF DENIAL", 
+    "462" = "NATURALIZATION, PETITION FOR HEARING OF DENIAL",
     "463" = "HABEAS CORPUS – ALIEN DETAINEE",
     "465" = "OTHER IMMIGRATION ACTIONS",
     "470" = "CIVIL (RICO)",
@@ -133,7 +133,7 @@ nos_recode <-
     "865" = "R.S.I.",
     "870" = "TAX SUITS",
     "871" = "IRS 3RD PARTY SUITS 26 USC 7609",
-    "875" = "CUSTOMER CHALLENGE 12 USC 3410", 
+    "875" = "CUSTOMER CHALLENGE 12 USC 3410",
     "890" = "OTHER STATUTORY ACTIONS",
     "891" = "AGRICULTURAL ACTS",
     "892" = "ECONOMIC STABILIZATION ACT",
@@ -194,7 +194,7 @@ district_recode <-
     "3L" = "Louisiana Eastern",
     "3N" = "Louisiana Middle",
     "36" = "Louisiana Western",
-    "37" = "Mississippi Northern", 
+    "37" = "Mississippi Northern",
     "38" = "Mississippi Southern",
     "39" = "Texas Northern",
     "40" = "Texas Eastern",
@@ -207,25 +207,25 @@ district_recode <-
     "47" = "Ohio Northern",
     "48" = "Ohio Southern",
     "49" = "Tennessee Eastern",
-    "50" = "Tennessee Middle", 
-    "51" = "Tennessee Western", 
-    "52" = "Illinois Northern", 
-    "53" = "Illinois Central", 
-    "54" = "Illinois Southern", 
-    "55" = "Indiana Northern", 
-    "56" = "Indiana Southern", 
-    "57" = "Wisconsin Eastern", 
+    "50" = "Tennessee Middle",
+    "51" = "Tennessee Western",
+    "52" = "Illinois Northern",
+    "53" = "Illinois Central",
+    "54" = "Illinois Southern",
+    "55" = "Indiana Northern",
+    "56" = "Indiana Southern",
+    "57" = "Wisconsin Eastern",
     "58" = "Wisconsin Western",
-    "60" = "Arkansas Eastern", 
-    "61" = "Arkansas Western", 
+    "60" = "Arkansas Eastern",
+    "61" = "Arkansas Western",
     "62" = "Iowa Northern",
     "63" = "Iowa Southern",
     "64" = "Minnesota",
-    "65" = "Missouri Eastern", 
-    "66" = "Missouri Western", 
+    "65" = "Missouri Eastern",
+    "66" = "Missouri Western",
     "67" = "Nebraska",
     "68" = "North Dakota",
-    "69" = "South Dakota", 
+    "69" = "South Dakota",
     "7-" = "Alaska",
     "70" = "Arizona",
     "71" = "California Northern",
@@ -259,16 +259,16 @@ dummy_cases <- c("0301223", "5700001", "1040001")
 #===============================================================================
 
 # Read in and write out the data
-yaml$path %>% 
+yaml$path %>%
   read_tsv(
     col_names = TRUE,
     col_types = vars_cols
-  ) %>% 
+  ) %>%
   select_all(str_to_lower) %>%
   mutate(
     # Recode outdated FIPS codes
     county = recode(
-      county, 
+      county,
       `51560` = 51005L,
       `51780` = 51083L,
       `12025` = 12086L,
@@ -283,15 +283,15 @@ yaml$path %>%
     # Recode nature of suit
     nature_of_suit = recode(nos, !!! nos_recode)
   ) %>%
-  # Remove duplicate cases with the same docket number, 
+  # Remove duplicate cases with the same docket number,
   # filed on the same date in the same court
-  distinct(district, docket, filedate, .keep_all = TRUE) %>% 
+  distinct(district, docket, filedate, .keep_all = TRUE) %>%
   filter(
     # Filter out partial year data
     lubridate::year(filedate) >= begin_year,
     lubridate::year(filedate) <= end_year,
     # Filter out dummy cases
     !docket %in% dummy_cases
-  ) %>% 
-  write_rds(file_out, compress = "gz") 
+  ) %>%
+  write_rds(file_out, compress = "gz")
 

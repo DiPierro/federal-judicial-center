@@ -12,10 +12,10 @@ library(lubridate)
 # Parameters
 
 ## Federal Judicial Center data
-file_fjc <- here::here("c01-own", "data-raw", "dashboard.rds")
+file_fjc <- here::here("data-raw", "dashboard.rds")
 
 # File with Census data
-file_census <- here::here("c01-own", "data-raw", "cb_county_population_2000_2018.rds")
+file_census <- here::here("data-raw", "cb_county_population_2000_2018.rds")
 
 ## FIPS codes to remove for county analysis
 fips_remove <- c(88888, 99999, 78010, 66010, 78030, 78020, 77777)
@@ -23,7 +23,7 @@ fips_remove <- c(88888, 99999, 78010, 66010, 78030, 78020, 77777)
 ## YAML data
 yaml <- 
   yaml::read_yaml(
-    here::here("c01-own", "scripts", "dashboard.yaml")
+    here::here("scripts", "dashboard.yaml")
   )
 
 ## Recode state fips
@@ -128,11 +128,11 @@ The database of federal civil court cases between 1988 and the present is availa
 
 This customized dashboard was created on `r Sys.Date()`.
 
-To make your own custom dashboard, visit the [Federal Judicial Center Dashboard project repository on GitHub](TKNEED LINKTK).
+To make your own custom dashboard, visit the [Federal Judicial Center Dashboard project repository on GitHub](https://github.com/DiPierro/federal-judicial-center).
 
 Disclaimers:
 
-* This dashboard was created by Amy DiPierro in March 2020. It is not an official product of the Federal Judicial Center.
+* This dashboard is not a product of the Federal Judicial Center.
 * This dashboard is a work in progress. Check back for updates and improvements.
 * The data presented here have been de-duplicated and cleaned at a basic level, but may still include duplicate cases and other errors. Plaintiff and defendant names have not been standardized.
 
