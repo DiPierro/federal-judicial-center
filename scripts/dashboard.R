@@ -14,7 +14,7 @@ library(tidyverse)
 
 ## Year range
 begin_year <- 1988
-end_year <- 2018
+end_year <- 2020
 
 ## Path in for dashboard.yaml
 yaml <-
