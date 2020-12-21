@@ -14,28 +14,31 @@
 # Enter the local path to your data
 # On a Mac, this will be something like /Users/username/folder/file.txt.
 # On a PC, this will be something like C:\Documents\Folder\file.txt
-path:
+path: /Users/amydipierro/Downloads/cv88on.txt
 
 # Enter the full name of a state to see lawsuits filed by its residents
-state:
+state: california
 
 # Enter the name of a district in the same state
 # to see lawsuits filed in this district
-district:
+# Example: california central
+district: california central
 
 # Enter the name of the "nature of suit" -- the type of lawsuit -- you want to see.
 # A list of all possible natures of suit is available here:
 # https://www.fjc.gov/sites/default/files/idb/codebooks/Civil%20Codebook%201988%20Forward_0.pdf
-nature_of_suit:
+# Names must be written exactly as they appear in the codebook
+# Example: PERSONAL INJURY -PRODUCT LIABILITY
+nature_of_suit: PERSONAL INJURY -PRODUCT LIABILITY
 
 # Enter the start year here as a value between 1988 and 2018
-start_year:
+start_year: 2010
 
 # Enter the end month here as a value between 1 and 12
-start_month:
+start_month: 9
 
 # Enter the end year here as a value between 1988 and 2018
-end_year:
+end_year: 2020
 
 # Enter the end month here as a value between 1 and 12
-end_month:
+end_month: 9
