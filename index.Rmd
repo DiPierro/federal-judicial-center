@@ -1,0 +1,442 @@
+---
+title: "Federal Judicial Center Dashboard"
+author: "Amy DiPierro"
+date: 2020-03-14
+output: flexdashboard::flex_dashboard
+---
+
+```{r}
+library(tidyverse)
+library(lubridate)
+
+# Parameters
+
+## Federal Judicial Center data
+file_fjc <- here::here("data-raw", "dashboard.rds")
+
+# File with Census data
+file_census <- here::here("data-raw", "cb_county_population_2000_2018.rds")
+
+## FIPS codes to remove for county analysis
+fips_remove <- c(88888, 99999, 78010, 66010, 78030, 78020, 77777)
+
+## YAML data
+yaml <- 
+  yaml::read_yaml(
+    here::here("scripts", "dashboard.yaml")
+  )
+
+## Recode state fips
+state_fips_recode <-
+  c(
+    "01" = "Alabama",
+    "02" = "Alaska",
+    "04" = "Arizona",
+    "05" = "Arkansas",
+    "06" = "California",
+    "08" = "Colorado",
+    "09" = "Connecticut",
+    "10" = "Delaware",
+    "12" = "Florida",
+    "13" = "Georgia",
+    "15" = "Hawaii",
+    "16" = "Idaho",
+    "17" = "Illinois",
+    "18" = "Indiana",
+    "19" = "Iowa",
+    "20" = "Kansas",
+    "21" = "Kentucky",
+    "22" = "Louisiana",
+    "23" = "Maine",
+    "24" = "Maryland",
+    "25" = "Massachusetts",
+    "26" = "Michigan",
+    "27" = "Minnesota",
+    "28" = "Mississippi",
+    "29" = "Missouri",
+    "30" = "Montana",
+    "31" = "Nebraska",
+    "32" = "Nevada",
+    "33" = "New Hampshire",
+    "34" = "New Jersey",
+    "35" = "New Mexico",
+    "36" = "New York",
+    "37" = "North Carolina",
+    "38" = "North Dakota",
+    "39" = "Ohio",
+    "40" = "Oklahoma",
+    "41" = "Oregon",
+    "42" = "Pennsylvania",
+    "44" = "Rhode Island",
+    "45" = "South Carolina",
+    "46" = "South Dakota",
+    "47" = "Tennessee",
+    "48" = "Texas",
+    "49" = "Utah",
+    "50" = "Vermont",
+    "51" = "Virginia",
+    "53" = "Washington",
+    "54" = "West Virginia",
+    "55" = "Wisconsin",
+    "56" = "Wyoming",
+    "60" = "American Samoa",
+    "66" = "Guam",
+    "69" = "Northern Mariana Islands",
+    "72" = "Puerto Rico",
+    "78" = "Virgin Islands"
+  )
+
+## County boundaries
+counties <- 
+  ussf::boundaries(geography = "county") %>% 
+  mutate(
+    county = as.integer(GEOID),
+    state = recode(STATEFP, !!! state_fips_recode)
+  ) %>% 
+  filter(state == str_to_title(yaml$state))
+  
+# Code
+
+## Read in Federal Judicial Center data
+fjc <- read_rds(file_fjc)
+
+# Read in and wrangle Census data
+
+census <- 
+  read_rds(file_census) %>% 
+  mutate(
+    fips = 
+      recode(
+        fips,
+        `46113`    = 46102L,
+        `51515`    = 51019L,
+        .default   = fips
+      ),
+    state = str_remove(str_extract(name, ", .*$"), ", ")
+  ) %>% 
+  filter(state == str_to_title(yaml$state))
+
+```
+
+# Welcome
+
+Welcome to the Federal Judicial Center Dashboard! 
+
+The Federal Judicial Center is the agency within the judicial branch of the U.S. government tasked with examining federal court practices and policies. Among the information it shares with the public is the [Integrated Data Base](https://www.fjc.gov/research/idb), a repository of data on all federal courts.
+
+The database of federal civil court cases between 1988 and the present is available for download as a [tab-delimited file](https://www.fjc.gov/research/idb/civil-cases-filed-terminated-and-pending-sy-1988-present) on the Federal Judicial Center's website.
+
+This customized dashboard was created on `r Sys.Date()`.
+
+To make your own custom dashboard, visit the [Federal Judicial Center Dashboard project repository on GitHub](https://github.com/DiPierro/federal-judicial-center).
+
+Disclaimers:
+
+* This dashboard is not a product of the Federal Judicial Center.
+* This dashboard is a work in progress. Check back for updates and improvements.
+* The data presented here have been de-duplicated and cleaned at a basic level, but may still include duplicate cases and other errors. Plaintiff and defendant names have not been standardized.
+
+For questions, comments and bugs, contact [dipierro@stanford.edu](mailto:dipierro@stanford.edu).
+
+# By context
+
+## Most-common types of lawsuits in `r str_to_title(yaml$district)`
+### Most-common types of lawsuits in `r str_to_title(yaml$district)`
+
+```{r}
+
+fjc %>% 
+  filter(
+    filedate >= lubridate::make_date(yaml$start_year, yaml$start_month, 1),
+    filedate <= lubridate::make_date(yaml$end_year, yaml$end_month, 1),
+    district == str_to_title(yaml$district)
+  ) %>% 
+  count(nature_of_suit, sort = TRUE) %>%
+  mutate(nature_of_suit = fct_reorder(nature_of_suit, n)) %>%
+  head(10) %>%  
+  ggplot() +
+  geom_col(
+    aes(x = nature_of_suit, y = n), position = "dodge"
+  ) +
+  theme(axis.text.y = element_text(angle = 30, size = 6)) +
+  coord_flip() +
+  labs(
+    title = str_glue("Most-common lawsuits in {str_to_title(yaml$district)}"),
+    subtitle = 
+      str_glue(
+        "Do {str_to_title(yaml$nature_of_suit)} cases make the top 10 from {yaml$start_year} to {yaml$end_year}?"
+    ),
+    x = NULL,
+    y = "Number of lawsuits",
+    caption = "Source: Federal Judicial Center"
+  )
+  
+```
+
+
+## Most common types of lawsuits in all district courts, `r {yaml$start_year}` to `r {yaml$end_year}`
+### Most common types of lawsuits in all district courts, `r {yaml$start_year}` to `r {yaml$end_year}`
+
+```{r}
+
+fjc %>% 
+  filter(
+    filedate >= lubridate::make_date(yaml$start_year, yaml$start_month, 1),
+    filedate <= lubridate::make_date(yaml$end_year, yaml$end_month, 1)
+  ) %>% 
+  count(nature_of_suit, sort = TRUE) %>%
+  mutate(nature_of_suit = fct_reorder(nature_of_suit, n)) %>%
+  head(10) %>%  
+  ggplot() +
+  geom_col(
+    aes(x = nature_of_suit, y = n), position = "dodge"
+  ) +
+  theme(axis.text.y = element_text(angle = 30, size = 6)) +
+  coord_flip() +
+  labs(
+    title = str_glue("Most-common lawsuits, all districts"),
+    subtitle = 
+      str_glue(
+        "Does {str_to_title(yaml$nature_of_suit)} make the top 10 from {yaml$start_year} to {yaml$end_year}?"
+    ),
+    x = NULL,
+    y = "Number of lawsuits",
+    caption = "Source: Federal Judicial Center"
+  )
+  
+```
+
+# By year
+
+## Change in all cases types
+### Change in all cases types
+
+```{r}
+fjc %>% 
+  mutate(
+    year = year(filedate),
+    focus_district = 
+      if_else(
+        district == str_to_title(yaml$district), 
+        str_to_title(yaml$district),
+        "Other"
+      )
+  ) %>% 
+  count(year, focus_district) %>%
+  group_by(focus_district) %>% 
+  mutate(pct_change = (n - lag(n)) / lag(n)) %>% 
+  drop_na(pct_change) %>% 
+  ggplot() +
+  geom_line(aes(x = year, y = pct_change, color = focus_district)) +
+  geom_smooth(
+    aes(x = year, y = pct_change, color = focus_district), method = "loess"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1)
+  ) +
+  theme(legend.position = "bottom") +
+  labs(
+    title = 
+      str_glue(
+        "Percent change cases filed per year, all case types"
+      ),
+    x = "Year",
+    y = "Percent change, lawsuits filed",
+    color = str_glue("{str_to_title(yaml$district)} vs. All other districts"),
+    caption = "Source: Federal Judicial Center"
+  )
+```
+
+## Change in `r str_to_title(yaml$nature_of_suit)` cases 
+### Change in `r str_to_title(yaml$nature_of_suit)` cases 
+
+```{r}
+fjc %>% 
+  filter(nature_of_suit == str_to_upper(yaml$nature_of_suit)) %>% 
+  mutate(
+    year = year(filedate),
+    focus_district = 
+      if_else(
+        district == str_to_title(yaml$district), 
+        str_to_title(yaml$district),
+        "Other"
+      )
+  ) %>% 
+  count(year, focus_district) %>%
+  group_by(focus_district) %>% 
+  mutate(pct_change = (n - lag(n)) / lag(n)) %>% 
+  drop_na(pct_change) %>% 
+  ggplot() +
+  geom_line(aes(x = year, y = pct_change, color = focus_district)) +
+  geom_smooth(
+    aes(x = year, y = pct_change, color = focus_district), method = "loess"
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1)
+  ) +
+  theme(legend.position = "bottom") +
+  labs(
+    title = 
+      str_glue(
+        "Percent change {str_to_title(yaml$nature_of_suit)} cases filed per year"
+      ),
+    x = "Year",
+    y = "Year-over-year percent change of lawsuits filed",
+    color = str_glue("{str_to_title(yaml$district)} vs. All other districts"),
+    caption = "Source: Federal Judicial Center"
+  )
+```
+
+
+# By district
+
+## How `r str_to_title(yaml$district)` compares on `r str_to_title(yaml$nature_of_suit)` cases, `r yaml$start_year` to `r yaml$end_year`
+### How `r str_to_title(yaml$district)` compares on `r str_to_title(yaml$nature_of_suit)` cases, `r yaml$start_year` to `r yaml$end_year`
+
+```{r}
+fjc %>% 
+  filter(
+    nature_of_suit == str_to_upper(yaml$nature_of_suit),
+    year(filedate) >= yaml$start_year,
+    year(filedate) <= yaml$end_year
+  ) %>% 
+  count(district, sort = TRUE) %>%
+  head(25) %>% 
+  mutate(district = fct_reorder(district, n)) %>% 
+  ggplot() +
+  geom_col(aes(x = district, y = n)) +
+  coord_flip() +
+  labs(
+    title = 
+      str_glue(
+        "{str_to_title(yaml$nature_of_suit)} cases, {yaml$start_year} to {yaml$end_year}"
+      ),
+    subtitle = 
+      str_glue("Does {str_to_title(yaml$district)} rank in the top 25?"),
+    x = NULL,
+    y = str_glue("Number of {str_to_title(yaml$nature_of_suit)} cases"),
+    caption = "Source: Federal Judicial Center"
+  )
+```
+
+## How `r str_to_title(yaml$district)` compares on `r str_to_title(yaml$nature_of_suit)` cases, `r yaml$start_year` to `r yaml$end_year`
+### How `r str_to_title(yaml$district)` compares on `r str_to_title(yaml$nature_of_suit)` cases, `r yaml$start_year` to `r yaml$end_year`
+
+```{r, fig.asp=0.8}
+fjc %>% 
+  filter(
+    nature_of_suit == str_to_upper(yaml$nature_of_suit),
+    year(filedate) >= yaml$start_year,
+    year(filedate) <= yaml$end_year
+  ) %>% 
+  count(district, sort = TRUE) %>% 
+  rename("District" = district, "Count" = n) %>% 
+  DT::datatable()
+```
+
+# By plaintiff and defendant
+
+## Most-common `r str_to_title(yaml$nature_of_suit)` plaintiffs from `r yaml$start_year` to `r yaml$end_year` in the `r str_to_title(yaml$district)` district
+### Most-common `r str_to_title(yaml$nature_of_suit)` plaintiffs from `r yaml$start_year` to `r yaml$end_year` in the `r str_to_title(yaml$district)` district
+
+```{r}
+fjc %>% 
+  filter(
+    district == str_to_title(yaml$district),
+    nature_of_suit == str_to_upper(yaml$nature_of_suit),
+    year(filedate) >= yaml$start_year,
+    year(filedate) <= yaml$end_year
+  ) %>%
+  count(plt, sort = TRUE) %>% 
+  rename("Plaintiff" = plt, "Count" = n) %>% 
+  DT::datatable()
+```
+
+## Most-common `r str_to_title(yaml$nature_of_suit)` defendants from `r yaml$start_year` to `r yaml$end_year` in the `r str_to_title(yaml$district)` district
+### Most-common `r str_to_title(yaml$nature_of_suit)` defendants from `r yaml$start_year` to `r yaml$end_year` in the `r str_to_title(yaml$district)` district
+
+```{r}
+fjc %>% 
+  filter(
+    nature_of_suit == str_to_upper(yaml$nature_of_suit),
+    district == str_to_title(yaml$district),
+    year(filedate) >= yaml$start_year,
+    year(filedate) <= yaml$end_year
+  ) %>%
+  count(def, sort = TRUE) %>% 
+  rename("Defendant" = def, "Count" = n) %>% 
+  DT::datatable()
+```
+
+# By county
+
+## Top five counties in ` r {str_to_title(yaml$state)}` for `r {str_to_title(yaml$nature_of_suit)}` litigation
+### Top five counties in `r {str_to_title(yaml$state)}` for `r {str_to_title(yaml$nature_of_suit)}` litigation
+
+```{r}
+# Join the FJC and Census files
+joined <-
+  fjc %>%
+  mutate(year = year(filedate)) %>%
+  filter(
+    !county %in% fips_remove,
+    nature_of_suit == str_to_upper(yaml$nature_of_suit),
+    year >= 2000,
+    year <= 2018
+  ) %>%
+  right_join(census, by = c("county" = "fips", "year")) %>%
+  drop_na(docket)
+
+top_counties <-
+  joined %>% 
+  count(name, sort = TRUE) %>% 
+  head(5) %>% 
+  pull(name)
+
+joined %>% 
+  filter(name %in% top_counties) %>% 
+  count(name, year) %>% 
+  ggplot(aes(x = year, y = n, color = name)) +
+  geom_line() +
+  guides(
+    color = guide_legend(nrow = 2)
+  ) +
+  theme(legend.position = "bottom") +
+  labs(
+    title = 
+      str_glue(
+        "Top five counties in {str_to_title(yaml$state)} for {str_to_title(yaml$nature_of_suit)} litigation"
+      ),
+    x = "Year",
+    y = "Count",
+    color = NULL
+  )
+```
+
+## Number of `r str_to_title(yaml$nature_of_suit)` lawsuits per 1,000 people in `r str_to_title(yaml$state)` by county
+### Number of `r str_to_title(yaml$nature_of_suit)` lawsuits per 1,000 people in `r str_to_title(yaml$state)` by county
+
+```{r}
+
+# Calculate the mean
+cases <-
+  joined %>%
+  group_by(county) %>%
+  summarize(
+    cases = n(),
+    avg_pop = mean(population, na.rm = TRUE)
+  ) %>%
+  mutate(nos_per_thousand = (cases / avg_pop) * 1000)
+
+counties %>%
+  left_join(cases, by = "county") %>%
+  arrange(desc(nos_per_thousand)) %>% 
+  select(
+    "Lawsuits per 1,000 people" = nos_per_thousand,
+    "County" = NAME
+  ) %>% 
+  DT::datatable()
+
+```
+
+
