@@ -57,3 +57,4 @@ data-raw/
 *.txt
 *.xpt
 .Rproj.user
+docs/README.html
